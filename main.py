@@ -4,7 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Read environment variables (these will be set in GitHub Actions secrets)
+# Read environment variables (set in GitHub Actions Secrets)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
@@ -13,9 +13,9 @@ RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL")
 def fetch_new_properties():
     """
     Fetch new property listings.
-    Replace this dummy data with a call to an actual API if desired.
+    For this example, we use dummy data across several cities.
     """
-    return [
+    properties = [
         {
             "city": "Indianapolis, IN",
             "sqft": 1600,
@@ -31,8 +31,82 @@ def fetch_new_properties():
             "future_development": 8,
             "url": "http://example.com/property1"
         },
-        # Add more properties or integrate with a real data source
+        {
+            "city": "Memphis, TN",
+            "sqft": 1500,
+            "beds": 3,
+            "baths": 2,
+            "price": 140000,
+            "rental_yield": 10,
+            "vacancy_rate": 5,
+            "economic_growth": 7,
+            "population_trend": 7,
+            "local_amenities": 7,
+            "landlord_friendly": True,
+            "future_development": 8,
+            "url": "http://example.com/property2"
+        },
+        {
+            "city": "Kansas City, MO",
+            "sqft": 1600,
+            "beds": 3,
+            "baths": 2,
+            "price": 145000,
+            "rental_yield": 8.5,
+            "vacancy_rate": 6,
+            "economic_growth": 8,
+            "population_trend": 7,
+            "local_amenities": 8,
+            "landlord_friendly": True,
+            "future_development": 8,
+            "url": "http://example.com/property3"
+        },
+        {
+            "city": "Detroit, MI",
+            "sqft": 1100,  # Below minimum sqft
+            "beds": 3,
+            "baths": 2,
+            "price": 130000,
+            "rental_yield": 10,
+            "vacancy_rate": 9,
+            "economic_growth": 6,
+            "population_trend": 6,
+            "local_amenities": 7,
+            "landlord_friendly": True,
+            "future_development": 7,
+            "url": "http://example.com/property4"
+        },
+        {
+            "city": "Cleveland, OH",
+            "sqft": 1400,
+            "beds": 2,  # Below minimum beds
+            "baths": 2,
+            "price": 120000,
+            "rental_yield": 8,
+            "vacancy_rate": 7,
+            "economic_growth": 6,
+            "population_trend": 6,
+            "local_amenities": 7,
+            "landlord_friendly": True,
+            "future_development": 7,
+            "url": "http://example.com/property5"
+        }
     ]
+    return properties
+
+def filter_properties(properties):
+    """
+    Filter properties based on minimum criteria:
+      - At least 1200 sqft
+      - At least 3 bedrooms
+      - At least 2 bathrooms
+      - Price under $200,000
+    """
+    filtered = []
+    for prop in properties:
+        if prop["sqft"] >= 1200 and prop["beds"] >= 3 and prop["baths"] >= 2 and prop["price"] < 200000:
+            filtered.append(prop)
+    return filtered
 
 def analyze_property(property_data):
     """
@@ -86,6 +160,7 @@ def select_best_properties(properties):
     """
     For each property, we parse the ChatGPT analysis,
     look for a "Score:" line, and keep only properties with score >= 8.
+    Then we sort the properties by score in descending order.
     """
     best_props = []
     for prop in properties:
@@ -97,7 +172,6 @@ def select_best_properties(properties):
         for line in analysis.splitlines():
             if "Score:" in line:
                 try:
-                    # e.g., "Score: 8.5" or "Score: 9"
                     score_str = line.split("Score:")[-1].strip().split("/")[0]
                     score = float(score_str)
                 except:
@@ -107,6 +181,9 @@ def select_best_properties(properties):
             prop["analysis"] = analysis
             prop["score"] = score
             best_props.append(prop)
+    
+    # Sort highest scoring properties at the top
+    best_props.sort(key=lambda x: x["score"], reverse=True)
     return best_props
 
 def send_email(best_properties):
@@ -146,11 +223,15 @@ def send_email(best_properties):
         return f"Error sending email: {e}"
 
 def main():
+    # Fetch all dummy properties
     properties = fetch_new_properties()
-    best_props = select_best_properties(properties)
+    # Filter based on our criteria: at least 1200 sqft, 3 beds, 2 baths, and under $200k
+    filtered_properties = filter_properties(properties)
+    # Analyze and select best properties (only those scoring >= 8)
+    best_props = select_best_properties(filtered_properties)
+    # Send an email with the results
     result = send_email(best_props)
     print(result)
 
 if __name__ == "__main__":
     main()
-
