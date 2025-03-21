@@ -68,7 +68,6 @@ Please provide a brief analysis and then output a final score on a scale of 1 to
 where 10 is the best investment opportunity. 
 Include the score in a line starting with "Score:".
 """
-
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -131,7 +130,7 @@ def send_email(best_properties):
         body += "-------------------------\n\n"
     
     body += "Happy Investing!\n"
-
+    
     msg = MIMEMultipart()
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = RECIPIENT_EMAIL
@@ -154,3 +153,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
